@@ -1,0 +1,9 @@
+# Configuration for log2kafka upstart job
+
+LOGFILE="/var/log/syslog"
+BROKER="10.1.2.3:9092"
+TOPIC="logs"
+
+# select a user with read access to the logfile
+# and write access to the log directory (for .state)
+SETUID="www-data"
