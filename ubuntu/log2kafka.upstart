@@ -8,6 +8,6 @@ respawn
 console log # log stdout/stderr to /var/log/upstart/
 
 script
-  . /etc/default/log2amqp
-  exec start-stop-daemon --start -c $SETUID --exec /usr/local/bin/go-log2amqp -- -file="$LOGFILE" -server="$BROKER" -topic="$TOPIC"
+  . /etc/default/log2kafka
+  exec start-stop-daemon --start -c $SETUID --exec /usr/local/bin/go-log2kafka -- -file="$LOGFILE" -server="$BROKER" -topic="$TOPIC"
 end script
