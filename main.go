@@ -7,7 +7,7 @@ and sends every line to a Kafka topic.
 Intended for nginx access logs -- so it does some special
 character encoding/escaping for that format.
 
-2014, DECK36 GmbH & Co. KG, <martin.schuette@deck36.de>
+2015, DECK36 GmbH & Co. KG, <martin.schuette@deck36.de>
 */
 package main
 
@@ -24,7 +24,7 @@ import (
 	"time"
 )
 
-const thisVersion = "0.1"
+const thisVersion = "0.2"
 const thisProgram = "log2kafka"
 
 // indicate what variables are our payload data,
@@ -47,7 +47,7 @@ func init() {
 	// I am looking for a pattern how to group command line arguments in a struct
 	options = CommandLineOptions{
 		flag.String("file", "/var/log/syslog", "filename to watch"),
-		flag.String("server", "localhost:9092", "Kafka endpoint (default: localhost:9092)"),
+		flag.String("server", "localhost:9092", "Kafka endpoints, comma separated (default: localhost:9092)"),
 		flag.String("topic", "logs", "Kafka topic name (default: logs)"),
 		flag.Bool("v", false, "Verbose output"),
 		flag.Bool("n", false, "Quit after file is read, do not wait for more data, do not read/write state"),
@@ -174,7 +174,8 @@ func writeLogsToKafka(queue <-chan Logline, shutdown chan<- string) {
 	if *options.verbose {
 		log.Println("connecting to ", *options.server, "...")
 	}
-	client, err := sarama.NewClient(clientID, []string{*options.server}, sarama.NewClientConfig())
+	serverlist := strings.Split(*options.server, ",")
+	client, err := sarama.NewClient(clientID, serverlist, sarama.NewClientConfig())
 	failOnError(err, "cannot open Kafka connection")
 	if *options.verbose {
 		log.Println("opened Kafka connection")
