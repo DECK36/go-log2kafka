@@ -183,7 +183,7 @@ func writeLogsToKafka(queue <-chan Logline, shutdown chan<- string) {
 	}
 	defer client.Close()
 
-	producer, err := sarama.NewSimpleProducer(client, *options.topic, nil)
+	producer, err := sarama.NewSimpleProducer(client, nil)
 	failOnError(err, "cannot create Kafka NewSimpleProducer")
 	if *options.verbose {
 		log.Println("created Kafka NewSimpleProducer")
@@ -195,7 +195,7 @@ func writeLogsToKafka(queue <-chan Logline, shutdown chan<- string) {
 			log.Println("sending Kafka Message")
 		}
 		encodedMessage := sarama.ByteEncoder(Unescape([]byte(message)))
-		err := producer.SendMessage(nil, encodedMessage)
+		err := producer.SendMessage(*options.topic, nil, encodedMessage)
 		if err != nil {
 			failOnError(err, "Kafka error")
 		} else if *options.verbose {
