@@ -20,6 +20,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -33,11 +34,11 @@ type Logline string
 
 // all command line options
 type CommandLineOptions struct {
-	filename     *string
-	server       *string
-	topic        *string
-	verbose      *bool
-	nofollow     *bool
+	filename *string
+	server   *string
+	topic    *string
+	verbose  *bool
+	nofollow *bool
 }
 
 var options CommandLineOptions
@@ -116,8 +117,8 @@ func readLogsFromFile(fname string, queue chan<- Logline, shutdown chan<- string
 
 	if doFollowFile {
 		statefile = fname + ".state"
-		inode     = readFileInode(fname)
-		offset    = readStateFile(fname, statefile, inode)
+		inode = readFileInode(fname)
+		offset = readStateFile(fname, statefile, inode)
 	}
 
 	// setup
@@ -170,7 +171,7 @@ func failOnError(err error, msg string) {
 // read logs from `queue` and send by AMQP
 // TODO: there is too little error handling. in case of problems we simply panic and quit
 func writeLogsToKafka(queue <-chan Logline, shutdown chan<- string) {
-    clientID := thisProgram+" "+thisVersion
+	clientID := thisProgram + " " + thisVersion
 	if *options.verbose {
 		log.Println("connecting to ", *options.server, "...")
 	}
@@ -208,10 +209,10 @@ func osSignalHandler(shutdown chan<- string) {
 	var sigs = make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 
-	sig := <-sigs  // this is the blocking part
+	sig := <-sigs // this is the blocking part
 
-	go func(){
-		time.Sleep(2*time.Second)
+	go func() {
+		time.Sleep(2 * time.Second)
 		log.Fatalf("shutdown was ignored, bailing out now.\n")
 	}()
 
@@ -223,7 +224,7 @@ func main() {
 		log.Printf("Start %s %s", thisProgram, thisVersion)
 	}
 	// let goroutines tell us to shutdown (on error)
-	var sig_shutdown  = make(chan string)
+	var sig_shutdown = make(chan string)
 	var file_shutdown = make(chan string)
 	var conn_shutdown = make(chan string)
 	// the main data queue, between reader and writer goroutines
@@ -259,7 +260,7 @@ func main() {
 		if *options.verbose {
 			log.Println("connection_shutdown:", message)
 		}
-		savestate <- true  // file reader still alive
+		savestate <- true // file reader still alive
 	}
 	if *options.verbose {
 		log.Println("The End.")
