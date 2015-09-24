@@ -15,7 +15,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/ActiveState/tail"
-	"github.com/Shopify/sarama"
+	"gopkg.in/Shopify/sarama.v1"
 	"io/ioutil"
 	"log"
 	"os"
@@ -25,7 +25,7 @@ import (
 	"time"
 )
 
-const thisVersion = "0.2"
+const thisVersion = "0.3"
 const thisProgram = "log2kafka"
 
 // indicate what variables are our payload data,
@@ -171,22 +171,23 @@ func failOnError(err error, msg string) {
 // read logs from `queue` and send by AMQP
 // TODO: there is too little error handling. in case of problems we simply panic and quit
 func writeLogsToKafka(queue <-chan Logline, shutdown chan<- string) {
-	clientID := thisProgram + " " + thisVersion
 	if *options.verbose {
 		log.Println("connecting to ", *options.server, "...")
 	}
 	serverlist := strings.Split(*options.server, ",")
-	client, err := sarama.NewClient(clientID, serverlist, sarama.NewClientConfig())
+	client, err := sarama.NewClient(serverlist, sarama.NewConfig())
+	// TODO: set client id via Config
+	// clientID := thisProgram + " " + thisVersion
 	failOnError(err, "cannot open Kafka connection")
 	if *options.verbose {
 		log.Println("opened Kafka connection")
 	}
 	defer client.Close()
 
-	producer, err := sarama.NewSimpleProducer(client, nil)
-	failOnError(err, "cannot create Kafka NewSimpleProducer")
+	producer, err := sarama.NewSyncProducerFromClient(client)
+	failOnError(err, "cannot create Kafka SyncProducer")
 	if *options.verbose {
-		log.Println("created Kafka NewSimpleProducer")
+		log.Println("created Kafka SyncProducer")
 	}
 	defer producer.Close()
 
@@ -194,8 +195,12 @@ func writeLogsToKafka(queue <-chan Logline, shutdown chan<- string) {
 		if *options.verbose {
 			log.Println("sending Kafka Message")
 		}
-		encodedMessage := sarama.ByteEncoder(Unescape([]byte(message)))
-		err := producer.SendMessage(*options.topic, nil, encodedMessage)
+
+		msg := &sarama.ProducerMessage{
+			Topic: *options.topic,
+			Value: sarama.ByteEncoder(Unescape([]byte(message))),
+		}
+		_, _, err := producer.SendMessage(msg)
 		if err != nil {
 			failOnError(err, "Kafka error")
 		} else if *options.verbose {
