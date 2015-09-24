@@ -34,11 +34,12 @@ type Logline string
 
 // all command line options
 type CommandLineOptions struct {
-	filename *string
-	server   *string
-	topic    *string
-	verbose  *bool
-	nofollow *bool
+	filename    *string
+	server      *string
+	topic       *string
+	verbose     *bool
+	nofollow    *bool
+	compression *int
 }
 
 var options CommandLineOptions
@@ -52,6 +53,7 @@ func init() {
 		flag.String("topic", "logs", "Kafka topic name (default: logs)"),
 		flag.Bool("v", false, "Verbose output"),
 		flag.Bool("n", false, "Quit after file is read, do not wait for more data, do not read/write state"),
+		flag.Int("comp", 0, "Kafka compression codec (default: 0 for no compression)"),
 	}
 	flag.Parse()
 }
@@ -175,9 +177,18 @@ func writeLogsToKafka(queue <-chan Logline, shutdown chan<- string) {
 		log.Println("connecting to ", *options.server, "...")
 	}
 	serverlist := strings.Split(*options.server, ",")
-	client, err := sarama.NewClient(serverlist, sarama.NewConfig())
-	// TODO: set client id via Config
-	// clientID := thisProgram + " " + thisVersion
+
+	config := sarama.NewConfig()
+	config.Producer.Compression = sarama.CompressionCodec(*options.compression)
+	config.ClientID = thisProgram + " " + thisVersion
+	err := config.Validate()
+	if err != nil {
+		failOnError(err, "Kafka config validation error")
+	} else if *options.verbose {
+		fmt.Printf("validated Kafka client config")
+	}
+
+	client, err := sarama.NewClient(serverlist, config)
 	failOnError(err, "cannot open Kafka connection")
 	if *options.verbose {
 		log.Println("opened Kafka connection")
