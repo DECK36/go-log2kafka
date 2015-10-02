@@ -11,9 +11,10 @@ encoding/escaping for that format (because `\xXX` is not valid JSON).
 
 ```
 Usage of ./go-log2kafka:
+  -comp=0: Kafka compression codec (default: 0 for no compression)
   -file="/var/log/syslog": filename to watch
   -n=false: Quit after file is read, do not wait for more data, do not read/write state
-  -server="localhost:9092": Kafka endpoint (default: localhost:9092)
+  -server="localhost:9092": Kafka endpoints, comma separated (default: localhost:9092)
   -topic="logs": Kafka topic name (default: logs)
   -v=false: Verbose output
 ```
