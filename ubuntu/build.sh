@@ -8,7 +8,7 @@ go build github.com/DECK36/go-log2kafka
 cp $TMP/bin/go-log2kafka ./log2kafka
 
 fpm -s dir -t deb --verbose \
-	-n deck36-log2kafka --version 0.2 --iteration 1 \
+	-n deck36-log2kafka --version 0.3 --iteration 1 \
 	--url https://github.com/DECK36/go-log2kafka \
 	--maintainer "Martin Schuette <martin.schuette@deck36.de>" \
 	--prefix /usr/local/bin \

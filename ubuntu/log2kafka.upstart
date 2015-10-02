@@ -9,5 +9,5 @@ console log # log stdout/stderr to /var/log/upstart/
 
 script
   . /etc/default/log2kafka
-  exec start-stop-daemon --start -c $SETUID --exec /usr/local/bin/log2kafka -- -file="$LOGFILE" -server="$BROKER" -topic="$TOPIC"
+  exec start-stop-daemon --start -c $SETUID --exec /usr/local/bin/log2kafka -- -file="$LOGFILE" -server="$BROKER" -topic="$TOPIC" -comp "$COMPRESSION_TYPE"
 end script

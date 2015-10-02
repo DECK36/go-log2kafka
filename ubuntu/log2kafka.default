@@ -1,5 +1,6 @@
 # Configuration for log2kafka upstart job
 
+COMPRESSION_TYPE="0"
 LOGFILE="/var/log/syslog"
 BROKER="10.1.2.3:9092"
 TOPIC="logs"
