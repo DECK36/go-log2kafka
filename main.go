@@ -25,7 +25,7 @@ import (
 	"time"
 )
 
-const thisVersion = "0.3"
+const thisVersion = "0.4dev"
 const thisProgram = "log2kafka"
 
 // indicate what variables are our payload data,
@@ -40,6 +40,7 @@ type CommandLineOptions struct {
 	verbose     *bool
 	nofollow    *bool
 	compression *int
+	partition   *int
 }
 
 var options CommandLineOptions
@@ -54,6 +55,11 @@ func init() {
 		flag.Bool("v", false, "Verbose output"),
 		flag.Bool("n", false, "Quit after file is read, do not wait for more data, do not read/write state"),
 		flag.Int("comp", 0, "Kafka compression codec (default: 0 for no compression)"),
+		flag.Int("part", -1, "Partition number (default: -1, indicating auto partition)"),
+	}
+	flag.Usage = func() {
+	        fmt.Fprintf(os.Stderr, "Usage of %s %s:\n", thisProgram, thisVersion)
+	        flag.PrintDefaults()
 	}
 	flag.Parse()
 }
@@ -181,6 +187,10 @@ func writeLogsToKafka(queue <-chan Logline, shutdown chan<- string) {
 	config := sarama.NewConfig()
 	config.Producer.Compression = sarama.CompressionCodec(*options.compression)
 	config.ClientID = thisProgram + " " + thisVersion
+	if *options.partition != -1 {
+		config.Producer.Partitioner = sarama.NewManualPartitioner
+	}
+
 	err := config.Validate()
 	if err != nil {
 		failOnError(err, "Kafka config validation error")
@@ -209,6 +219,7 @@ func writeLogsToKafka(queue <-chan Logline, shutdown chan<- string) {
 
 		msg := &sarama.ProducerMessage{
 			Topic: *options.topic,
+			Partition: int32(*options.partition),
 			Value: sarama.ByteEncoder(Unescape([]byte(message))),
 		}
 		_, _, err := producer.SendMessage(msg)
